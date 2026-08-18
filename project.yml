@@ -30,6 +30,8 @@ targets:
       properties:
         UILaunchScreen: {}
         CFBundleDisplayName: "$(APP_DISPLAY_NAME)"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         ITSAppUsesNonExemptEncryption: false
         API_BASE_URL: "$(API_BASE_URL)"
     entitlements:
