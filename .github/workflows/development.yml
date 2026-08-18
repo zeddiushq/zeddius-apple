@@ -14,7 +14,7 @@ jobs:
     if: github.event.pull_request.merged == true
     environment: development
     permissions:
-      contents: read
+      contents: write
 
     steps:
       - name: Checkout
@@ -89,3 +89,32 @@ jobs:
       - name: Clean up API key files
         if: always()
         run: rm -f "$RUNNER_TEMP/AuthKey.p8" "$RUNNER_TEMP/asc_api_key.json"
+
+      # Ties the exact build shown in TestFlight (marketing version + build
+      # number) back to the exact commit it was built from — no version-bump
+      # commit needed since MARKETING_VERSION doesn't change here, just a tag.
+      - name: Read marketing version
+        id: version
+        run: |
+          MARKETING_VERSION=$(xcodebuild -showBuildSettings \
+            -project Zeddius.xcodeproj \
+            -scheme "Zeddius Dev" \
+            -configuration Release-Dev \
+            | awk -F' = ' '/ MARKETING_VERSION / { print $2; exit }')
+          echo "marketing_version=$MARKETING_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Tag build
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag dev-v${{ steps.version.outputs.marketing_version }}-${{ github.run_number }}
+          git push origin dev-v${{ steps.version.outputs.marketing_version }}-${{ github.run_number }}
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create dev-v${{ steps.version.outputs.marketing_version }}-${{ github.run_number }} \
+            --title "Dev v${{ steps.version.outputs.marketing_version }} (${{ github.run_number }})" \
+            --notes "Uploaded to dev TestFlight (com.zeddius.dev.app). Marketing version ${{ steps.version.outputs.marketing_version }}, build ${{ github.run_number }}." \
+            --generate-notes
