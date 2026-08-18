@@ -19,7 +19,13 @@ final class AuthService {
     /// (covers the cold-launch case where `currentUser` hasn't been fetched yet).
     private(set) var needsEmailVerification = false
 
-    private let baseURL = URL(string: "https://api.dev.zeddius.com/v1")!
+    private let baseURL: URL = {
+        guard let urlString = Bundle.main.object(forInfoDictionaryKey: "API_BASE_URL") as? String,
+              let url = URL(string: urlString) else {
+            fatalError("API_BASE_URL missing or invalid in Info.plist — check Config/*.xcconfig")
+        }
+        return url
+    }()
     private let session = URLSession.shared
 
     private init() {
