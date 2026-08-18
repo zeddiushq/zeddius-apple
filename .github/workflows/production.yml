@@ -1,0 +1,127 @@
+name: Production
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+    runs-on: macos-latest
+    environment: production
+    permissions:
+      contents: write
+
+    steps:
+      - name: Create GitHub App token
+        uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: 3410763
+          private-key: ${{ secrets.ACTIONS_BOT_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Write App Store Connect API key
+        run: |
+          echo "${{ secrets.APP_STORE_CONNECT_API_KEY_B64 }}" | base64 --decode > "$RUNNER_TEMP/AuthKey.p8"
+
+      - name: Write App Store Connect API key JSON (for fastlane)
+        run: |
+          python3 -c "
+          import json, os
+          key_path = os.path.join(os.environ['RUNNER_TEMP'], 'AuthKey.p8')
+          with open(key_path) as f:
+              key = f.read()
+          data = {
+              'key_id': '${{ vars.APP_STORE_CONNECT_KEY_ID }}',
+              'issuer_id': '${{ vars.APP_STORE_CONNECT_ISSUER_ID }}',
+              'key': key,
+              'in_house': False,
+          }
+          out_path = os.path.join(os.environ['RUNNER_TEMP'], 'asc_api_key.json')
+          with open(out_path, 'w') as f:
+              json.dump(data, f)
+          "
+
+      - name: Archive
+        run: |
+          xcodebuild archive \
+            -project Zeddius.xcodeproj \
+            -scheme "Zeddius" \
+            -configuration Release-Prod \
+            -archivePath "$RUNNER_TEMP/Zeddius.xcarchive" \
+            -destination "generic/platform=iOS" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
+            -authenticationKeyID "${{ vars.APP_STORE_CONNECT_KEY_ID }}" \
+            -authenticationKeyIssuerID "${{ vars.APP_STORE_CONNECT_ISSUER_ID }}" \
+            CURRENT_PROJECT_VERSION=$GITHUB_RUN_NUMBER
+
+      - name: Export .ipa
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Zeddius.xcarchive" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -exportOptionsPlist Config/ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/AuthKey.p8" \
+            -authenticationKeyID "${{ vars.APP_STORE_CONNECT_KEY_ID }}" \
+            -authenticationKeyIssuerID "${{ vars.APP_STORE_CONNECT_ISSUER_ID }}"
+
+      - name: Install fastlane
+        run: gem install fastlane --no-document
+
+      # Uploads to TestFlight only. This build stays internal-only until you
+      # manually add it to an external group (or submit it to the App Store)
+      # in App Store Connect — the workflow deliberately doesn't do either.
+      - name: Upload to TestFlight (prod)
+        run: |
+          fastlane pilot upload \
+            --ipa "$RUNNER_TEMP/export/Zeddius.ipa" \
+            --api_key_path "$RUNNER_TEMP/asc_api_key.json" \
+            --skip_waiting_for_build_processing true
+
+      - name: Clean up API key files
+        if: always()
+        run: rm -f "$RUNNER_TEMP/AuthKey.p8" "$RUNNER_TEMP/asc_api_key.json"
+
+      # Ties the exact build shown in TestFlight (marketing version + build
+      # number) back to the exact commit it was built from — no version-bump
+      # commit needed since MARKETING_VERSION doesn't change here, just a tag.
+      - name: Read marketing version
+        id: version
+        run: |
+          MARKETING_VERSION=$(xcodebuild -showBuildSettings \
+            -project Zeddius.xcodeproj \
+            -scheme "Zeddius" \
+            -configuration Release-Prod \
+            | awk -F' = ' '/ MARKETING_VERSION / { print $2; exit }')
+          echo "marketing_version=$MARKETING_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Tag build
+        run: |
+          git config user.name "zeddius-actions[bot]"
+          git config user.email "zeddius-actions[bot]@users.noreply.github.com"
+          git tag prod-v${{ steps.version.outputs.marketing_version }}-${{ github.run_number }}
+          git push origin prod-v${{ steps.version.outputs.marketing_version }}-${{ github.run_number }}
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh release create prod-v${{ steps.version.outputs.marketing_version }}-${{ github.run_number }} \
+            --title "Prod v${{ steps.version.outputs.marketing_version }} (${{ github.run_number }})" \
+            --notes "Uploaded to prod TestFlight (com.zeddius.app). Marketing version ${{ steps.version.outputs.marketing_version }}, build ${{ github.run_number }}." \
+            --generate-notes
