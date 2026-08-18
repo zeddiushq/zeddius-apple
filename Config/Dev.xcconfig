@@ -1,0 +1,6 @@
+// "//" starts a comment in xcconfig, so URLs need the slash pair split with
+// an empty macro invocation ($()) to avoid truncating the rest of the line.
+API_BASE_URL = https:/$()/api.dev.zeddius.com/v1
+PRODUCT_BUNDLE_IDENTIFIER = com.zeddius.dev.app
+APP_DISPLAY_NAME = Zeddius Dev
+KEYCHAIN_GROUP = com.zeddius.dev.shared

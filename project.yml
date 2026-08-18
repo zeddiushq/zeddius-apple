@@ -4,6 +4,16 @@ options:
   deploymentTarget:
     iOS: "18.0"
   createIntermediateGroups: true
+configs:
+  Debug-Dev: debug
+  Release-Dev: release
+  Debug-Prod: debug
+  Release-Prod: release
+configFiles:
+  Debug-Dev: Config/Dev.xcconfig
+  Release-Dev: Config/Dev.xcconfig
+  Debug-Prod: Config/Prod.xcconfig
+  Release-Prod: Config/Prod.xcconfig
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -19,18 +29,18 @@ targets:
       path: Zeddius/Info.plist
       properties:
         UILaunchScreen: {}
-        CFBundleDisplayName: Zeddius
+        CFBundleDisplayName: "$(APP_DISPLAY_NAME)"
         ITSAppUsesNonExemptEncryption: false
+        API_BASE_URL: "$(API_BASE_URL)"
     entitlements:
       path: Zeddius/Zeddius.entitlements
       properties:
         keychain-access-groups:
-          - "$(AppIdentifierPrefix)com.zeddius.shared"
+          - "$(AppIdentifierPrefix)$(KEYCHAIN_GROUP)"
         com.apple.developer.applesignin:
           - Default
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.zeddius.app
         MARKETING_VERSION: "1.0"
         CURRENT_PROJECT_VERSION: "1"
         SWIFT_VERSION: "6.0"
@@ -39,11 +49,19 @@ targets:
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: "3XPMRGWL24"
 schemes:
+  Zeddius Dev:
+    build:
+      targets:
+        Zeddius: all
+    run:
+      config: Debug-Dev
+    archive:
+      config: Release-Dev
   Zeddius:
     build:
       targets:
         Zeddius: all
     run:
-      config: Debug
+      config: Debug-Prod
     archive:
-      config: Release
+      config: Release-Prod
