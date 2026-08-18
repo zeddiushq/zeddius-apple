@@ -17,8 +17,17 @@ jobs:
       contents: write
 
     steps:
+      - name: Create GitHub App token
+        uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: 3410763
+          private-key: ${{ secrets.ACTIONS_BOT_PRIVATE_KEY }}
+
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Show Xcode version
         run: xcodebuild -version
@@ -105,14 +114,14 @@ jobs:
 
       - name: Tag build
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "zeddius-actions[bot]"
+          git config user.email "zeddius-actions[bot]@users.noreply.github.com"
           git tag dev-v${{ steps.version.outputs.marketing_version }}-${{ github.run_number }}
           git push origin dev-v${{ steps.version.outputs.marketing_version }}-${{ github.run_number }}
 
       - name: Create GitHub release
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           gh release create dev-v${{ steps.version.outputs.marketing_version }}-${{ github.run_number }} \
             --title "Dev v${{ steps.version.outputs.marketing_version }} (${{ github.run_number }})" \
