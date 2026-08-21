@@ -19,14 +19,14 @@ settings:
     SWIFT_VERSION: "6.0"
     SWIFT_STRICT_CONCURRENCY: complete
 targets:
-  Zeddius:
+  ZeddiusIOS:
     type: application
     platform: iOS
     deploymentTarget: "18.0"
     sources:
-      - path: Zeddius
+      - path: ZeddiusIOS
     info:
-      path: Zeddius/Info.plist
+      path: ZeddiusIOS/Info.plist
       properties:
         UILaunchScreen: {}
         CFBundleDisplayName: "$(APP_DISPLAY_NAME)"
@@ -35,7 +35,7 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         API_BASE_URL: "$(API_BASE_URL)"
     entitlements:
-      path: Zeddius/Zeddius.entitlements
+      path: ZeddiusIOS/Zeddius.entitlements
       properties:
         keychain-access-groups:
           - "$(AppIdentifierPrefix)$(KEYCHAIN_GROUP)"
@@ -43,6 +43,7 @@ targets:
           - Default
     settings:
       base:
+        PRODUCT_NAME: Zeddius
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"
         SWIFT_VERSION: "6.0"
@@ -55,7 +56,7 @@ schemes:
   Zeddius Dev:
     build:
       targets:
-        Zeddius: all
+        ZeddiusIOS: all
     run:
       config: Debug-Dev
     archive:
@@ -63,7 +64,7 @@ schemes:
   Zeddius:
     build:
       targets:
-        Zeddius: all
+        ZeddiusIOS: all
     run:
       config: Debug-Prod
     archive:
