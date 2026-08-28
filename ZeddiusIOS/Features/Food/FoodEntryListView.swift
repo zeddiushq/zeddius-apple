@@ -68,9 +68,17 @@ struct FoodEntryListView: View {
             let dayEntries = entries(model.entries, onSameDayAs: selectedDate)
             List {
                 Section {
-                    DaySelectorRow(selectedDate: $selectedDate)
-                    TotalsRow(label: "Day", entries: dayEntries)
-                    TotalsRow(label: "Week", entries: weekEntries(model.entries, containing: selectedDate))
+                    // One List row containing all three, with explicit Dividers, rather
+                    // than three separate rows — List's automatic separator insets came
+                    // out inconsistent (only partially spanning) once the day selector's
+                    // buttons were in the mix.
+                    VStack(spacing: 10) {
+                        DaySelectorRow(selectedDate: $selectedDate)
+                        Divider()
+                        TotalsRow(label: "Day", entries: dayEntries)
+                        Divider()
+                        TotalsRow(label: "Week", entries: weekEntries(model.entries, containing: selectedDate))
+                    }
                 }
                 Section {
                     if dayEntries.isEmpty {
@@ -176,6 +184,17 @@ private struct TotalsRow: View {
 private struct FoodEntryRow: View {
     let entry: FoodEntry
 
+    /// "45p · 12c · 6f" — only the macros that are actually set, in that order. `nil`
+    /// when none are set (e.g. a quick no-macro log), so the row doesn't show a stray line.
+    private var macroSummary: String? {
+        let parts = [
+            entry.proteinG.map { "\($0.formatted(.number.precision(.fractionLength(0))))p" },
+            entry.carbsG.map { "\($0.formatted(.number.precision(.fractionLength(0))))c" },
+            entry.fatG.map { "\($0.formatted(.number.precision(.fractionLength(0))))f" },
+        ].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
@@ -192,10 +211,17 @@ private struct FoodEntryRow: View {
                 .foregroundStyle(.secondary)
             }
             Spacer()
-            if let kcal = entry.kcal {
-                Text("\(kcal, format: .number.precision(.fractionLength(0))) kcal")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            VStack(alignment: .trailing, spacing: 2) {
+                if let kcal = entry.kcal {
+                    Text("\(kcal, format: .number.precision(.fractionLength(0))) kcal")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                if let macroSummary {
+                    Text(macroSummary)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .padding(.vertical, 4)
