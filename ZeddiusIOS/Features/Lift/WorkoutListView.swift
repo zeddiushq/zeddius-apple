@@ -3,10 +3,11 @@ import SwiftUI
 struct WorkoutListView: View {
     @Environment(APIClient.self) private var api
     @State private var model: WorkoutModel?
-    @State private var isPresentingLogWorkout = false
+    @State private var isPresentingNewWorkout = false
+    @State private var path = NavigationPath()
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             Group {
                 if let model {
                     content(for: model)
@@ -15,18 +16,23 @@ struct WorkoutListView: View {
                 }
             }
             .navigationTitle("Lift")
+            .navigationDestination(for: UUID.self) { workoutId in
+                WorkoutDetailView(workoutId: workoutId)
+            }
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
-                        isPresentingLogWorkout = true
+                        isPresentingNewWorkout = true
                     } label: {
                         Image(systemName: "plus")
                     }
                 }
             }
-            .sheet(isPresented: $isPresentingLogWorkout) {
+            .sheet(isPresented: $isPresentingNewWorkout) {
                 if let model {
-                    LogWorkoutView(model: model)
+                    NewWorkoutView(model: model) { newWorkoutId in
+                        path.append(newWorkoutId)
+                    }
                 }
             }
             .task {
@@ -50,12 +56,14 @@ struct WorkoutListView: View {
             ContentUnavailableView {
                 Label("No workouts yet", systemImage: "dumbbell")
             } description: {
-                Text("Tap + to log a lifting session.")
+                Text("Tap + to start a lifting session.")
             }
         } else {
             List {
                 ForEach(liftWorkouts) { workout in
-                    WorkoutRow(workout: workout)
+                    NavigationLink(value: workout.id) {
+                        WorkoutRow(workout: workout)
+                    }
                 }
                 .onDelete { offsets in
                     Task { await model.delete(at: offsets, in: liftWorkouts) }
