@@ -63,6 +63,31 @@ final class APIClient {
         try await requestNoContent("DELETE", path: "/food-entries/\(id.uuidString)", body: nil, retrying: true)
     }
 
+    func getExercises() async throws -> [Exercise] {
+        try await request("GET", path: "/exercises")
+    }
+
+    func getWorkouts() async throws -> [Workout] {
+        let workouts: [Workout] = try await request("GET", path: "/workouts")
+        return workouts.sorted { $0.startedAt > $1.startedAt }
+    }
+
+    func createWorkout(_ body: CreateWorkoutRequest) async throws -> Workout {
+        let encoded = try APICoding.encoder.encode(body)
+        return try await requestDecoded("POST", path: "/workouts", body: encoded, retrying: true)
+    }
+
+    func createLiftSets(workoutId: UUID, _ body: BulkCreateLiftSetsRequest) async throws -> [LiftSet] {
+        let encoded = try APICoding.encoder.encode(body)
+        return try await requestDecoded(
+            "POST", path: "/workouts/\(workoutId.uuidString)/lift-sets", body: encoded, retrying: true
+        )
+    }
+
+    func deleteWorkout(id: UUID) async throws {
+        try await requestNoContent("DELETE", path: "/workouts/\(id.uuidString)", body: nil, retrying: true)
+    }
+
     // MARK: - Core request handling
 
     private func request<T: Decodable>(_ method: String, path: String) async throws -> T {
