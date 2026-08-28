@@ -91,6 +91,7 @@ struct AddFoodEntryView: View {
                     }
                 }
             }
+            .dismissKeyboardToolbar()
         }
     }
 
