@@ -75,9 +75,19 @@ struct FoodEntryListView: View {
                     VStack(spacing: 10) {
                         DaySelectorRow(selectedDate: $selectedDate)
                         Divider()
-                        TotalsRow(label: "Day", entries: dayEntries)
+                        TotalsRow(
+                            label: "Day",
+                            entries: dayEntries,
+                            targetCalories: model.targetCalories,
+                            targetProteinG: model.targetProteinG
+                        )
                         Divider()
-                        TotalsRow(label: "Week", entries: weekEntries(model.entries, containing: selectedDate))
+                        TotalsRow(
+                            label: "Week",
+                            entries: weekEntries(model.entries, containing: selectedDate),
+                            targetCalories: model.targetCalories.map { $0 * 7 },
+                            targetProteinG: model.targetProteinG.map { $0 * 7 }
+                        )
                     }
                 }
                 Section {
@@ -154,6 +164,8 @@ private struct DaySelectorRow: View {
 private struct TotalsRow: View {
     let label: String
     let entries: [FoodEntry]
+    let targetCalories: Int?
+    let targetProteinG: Int?
 
     private var totalKcal: Decimal {
         entries.reduce(0) { $0 + ($1.kcal ?? 0) }
@@ -163,21 +175,53 @@ private struct TotalsRow: View {
         entries.reduce(0) { $0 + ($1.proteinG ?? 0) }
     }
 
+    private var kcalProgress: Double? {
+        guard let targetCalories, targetCalories > 0 else { return nil }
+        return min(Double(truncating: totalKcal as NSNumber) / Double(targetCalories), 1)
+    }
+
+    private var proteinProgress: Double? {
+        guard let targetProteinG, targetProteinG > 0 else { return nil }
+        return min(Double(truncating: totalProteinG as NSNumber) / Double(targetProteinG), 1)
+    }
+
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(label)
-                    .font(.caption)
+        VStack(spacing: 6) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(label)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(kcalText)
+                        .font(.headline)
+                }
+                Spacer()
+                Text(proteinText)
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
-                Text("\(totalKcal, format: .number.precision(.fractionLength(0))) kcal")
-                    .font(.headline)
             }
-            Spacer()
-            Text("\(totalProteinG, format: .number.precision(.fractionLength(0)))g protein")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            if let kcalProgress {
+                ProgressView(value: kcalProgress)
+                    .tint(kcalProgress >= 1 ? .green : .accentColor)
+            }
+            if let proteinProgress {
+                ProgressView(value: proteinProgress)
+                    .tint(proteinProgress >= 1 ? .green : .orange)
+            }
         }
         .padding(.vertical, 2)
+    }
+
+    private var kcalText: String {
+        let total = totalKcal.formatted(.number.precision(.fractionLength(0)))
+        guard let targetCalories else { return "\(total) kcal" }
+        return "\(total) / \(targetCalories) kcal"
+    }
+
+    private var proteinText: String {
+        let total = totalProteinG.formatted(.number.precision(.fractionLength(0)))
+        guard let targetProteinG else { return "\(total)g protein" }
+        return "\(total) / \(targetProteinG)g protein"
     }
 }
 

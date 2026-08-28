@@ -6,6 +6,8 @@ import Observation
 final class FoodEntryModel {
     private(set) var entries: [FoodEntry] = []
     private(set) var isLoading = false
+    private(set) var targetCalories: Int?
+    private(set) var targetProteinG: Int?
     var errorMessage: String?
 
     private let api: APIClient
@@ -20,7 +22,12 @@ final class FoodEntryModel {
         defer { isLoading = false }
 
         do {
-            entries = try await api.getFoodEntries()
+            async let entriesTask = api.getFoodEntries()
+            async let userTask = api.getMe()
+            entries = try await entriesTask
+            let user = try await userTask
+            targetCalories = user.targetCalories
+            targetProteinG = user.targetProteinG
         } catch {
             errorMessage = error.localizedDescription
         }

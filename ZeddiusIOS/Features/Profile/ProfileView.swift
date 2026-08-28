@@ -4,6 +4,7 @@ struct ProfileView: View {
     @Environment(APIClient.self) private var api
     @State private var model: ProfileModel?
     @State private var isSigningOut = false
+    @State private var isPresentingEditTargets = false
 
     var body: some View {
         NavigationStack {
@@ -15,6 +16,11 @@ struct ProfileView: View {
                 }
             }
             .navigationTitle("Profile")
+            .sheet(isPresented: $isPresentingEditTargets) {
+                if let model {
+                    EditTargetsView(model: model)
+                }
+            }
             .task {
                 if model == nil {
                     model = ProfileModel(api: api)
@@ -50,18 +56,25 @@ struct ProfileView: View {
                     }
                 }
 
-                if user.targetCalories != nil || user.targetProteinG != nil || user.targetSleepHours != nil {
-                    Section("Targets") {
-                        if let targetCalories = user.targetCalories {
-                            LabeledContent("Calories", value: "\(targetCalories) kcal")
-                        }
-                        if let targetProteinG = user.targetProteinG {
-                            LabeledContent("Protein", value: "\(targetProteinG) g")
-                        }
-                        if let targetSleepHours = user.targetSleepHours {
-                            LabeledContent("Sleep", value: "\(targetSleepHours.formatted(.number.precision(.fractionLength(1)))) hrs")
-                        }
+                Section {
+                    if let targetCalories = user.targetCalories {
+                        LabeledContent("Calories", value: "\(targetCalories) kcal")
                     }
+                    if let targetProteinG = user.targetProteinG {
+                        LabeledContent("Protein", value: "\(targetProteinG) g")
+                    }
+                    if let targetWeightKg = user.targetWeightKg {
+                        let lbs = targetWeightKg / Decimal(0.45359237)
+                        LabeledContent("Weight goal", value: "\(lbs.formatted(.number.precision(.fractionLength(0...1)))) lb")
+                    }
+                    if let targetSleepHours = user.targetSleepHours {
+                        LabeledContent("Sleep", value: "\(targetSleepHours.formatted(.number.precision(.fractionLength(1)))) hrs")
+                    }
+                    Button("Edit Targets") {
+                        isPresentingEditTargets = true
+                    }
+                } header: {
+                    Text("Targets")
                 }
 
                 Section {

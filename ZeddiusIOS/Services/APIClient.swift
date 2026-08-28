@@ -21,6 +21,11 @@ final class APIClient {
         try await request("GET", path: "/users/me")
     }
 
+    func updateMe(_ body: UpdateUserRequest) async throws -> User {
+        let encoded = try APICoding.encoder.encode(body)
+        return try await requestDecoded("PATCH", path: "/users/me", body: encoded, retrying: true)
+    }
+
     func getWeightLogs() async throws -> [WeightLog] {
         let logs: [WeightLog] = try await request("GET", path: "/weight-logs")
         return logs.sorted { $0.recordedAt > $1.recordedAt }
