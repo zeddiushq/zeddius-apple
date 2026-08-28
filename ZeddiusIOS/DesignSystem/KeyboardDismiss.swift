@@ -9,12 +9,22 @@ extension View {
     func dismissKeyboardToolbar() -> some View {
         toolbar {
             ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("Done") {
-                    UIApplication.shared.sendAction(
-                        #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil
-                    )
+                // A bare Button here renders flush against the keys with no
+                // breathing room — wrapping it in its own bar (padding +
+                // background) makes it read as a proper accessory bar
+                // attached to the keyboard, matching system keyboards.
+                HStack {
+                    Spacer()
+                    Button("Done") {
+                        UIApplication.shared.sendAction(
+                            #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil
+                        )
+                    }
+                    .fontWeight(.semibold)
                 }
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                .background(.bar)
             }
         }
     }
