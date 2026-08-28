@@ -22,6 +22,11 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Food", systemImage: "fork.knife")
                 }
+
+            WorkoutListView()
+                .tabItem {
+                    Label("Lift", systemImage: "dumbbell")
+                }
         }
     }
 }
