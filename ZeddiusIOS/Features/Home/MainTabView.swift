@@ -12,6 +12,16 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Weight", systemImage: "scalemass")
                 }
+
+            SleepListView()
+                .tabItem {
+                    Label("Sleep", systemImage: "bed.double")
+                }
+
+            FoodEntryListView()
+                .tabItem {
+                    Label("Food", systemImage: "fork.knife")
+                }
         }
     }
 }

@@ -35,6 +35,34 @@ final class APIClient {
         try await requestNoContent("DELETE", path: "/weight-logs/\(id.uuidString)", body: nil, retrying: true)
     }
 
+    func getSleepLogs() async throws -> [SleepLog] {
+        let logs: [SleepLog] = try await request("GET", path: "/sleep-logs")
+        return logs.sorted { $0.bedTime > $1.bedTime }
+    }
+
+    func createSleepLog(_ body: CreateSleepLogRequest) async throws -> SleepLog {
+        let encoded = try APICoding.encoder.encode(body)
+        return try await requestDecoded("POST", path: "/sleep-logs", body: encoded, retrying: true)
+    }
+
+    func deleteSleepLog(id: UUID) async throws {
+        try await requestNoContent("DELETE", path: "/sleep-logs/\(id.uuidString)", body: nil, retrying: true)
+    }
+
+    func getFoodEntries() async throws -> [FoodEntry] {
+        let entries: [FoodEntry] = try await request("GET", path: "/food-entries")
+        return entries.sorted { $0.consumedAt > $1.consumedAt }
+    }
+
+    func createFoodEntry(_ body: CreateFoodEntryRequest) async throws -> FoodEntry {
+        let encoded = try APICoding.encoder.encode(body)
+        return try await requestDecoded("POST", path: "/food-entries", body: encoded, retrying: true)
+    }
+
+    func deleteFoodEntry(id: UUID) async throws {
+        try await requestNoContent("DELETE", path: "/food-entries/\(id.uuidString)", body: nil, retrying: true)
+    }
+
     // MARK: - Core request handling
 
     private func request<T: Decodable>(_ method: String, path: String) async throws -> T {
