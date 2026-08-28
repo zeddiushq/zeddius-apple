@@ -61,7 +61,7 @@ struct AddWeightEntryView: View {
                     }
                 }
             }
-            .dismissKeyboardToolbar()
+            .dismissKeyboardOnScroll()
         }
     }
 

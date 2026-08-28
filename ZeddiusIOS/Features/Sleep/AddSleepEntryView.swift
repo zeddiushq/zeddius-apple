@@ -54,7 +54,7 @@ struct AddSleepEntryView: View {
                     }
                 }
             }
-            .dismissKeyboardToolbar()
+            .dismissKeyboardOnScroll()
         }
     }
 

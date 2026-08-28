@@ -3,34 +3,24 @@ import SwiftUI
 struct MainTabView: View {
     var body: some View {
         TabView {
+            HomeView()
+                .tabItem {
+                    Label("Home", systemImage: "house")
+                }
+
+            LogView()
+                .tabItem {
+                    Label("Log", systemImage: "list.bullet.clipboard")
+                }
+
+            TrainView()
+                .tabItem {
+                    Label("Train", systemImage: "figure.run")
+                }
+
             ProfileView()
                 .tabItem {
                     Label("Profile", systemImage: "person.crop.circle")
-                }
-
-            WeightListView()
-                .tabItem {
-                    Label("Weight", systemImage: "scalemass")
-                }
-
-            SleepListView()
-                .tabItem {
-                    Label("Sleep", systemImage: "bed.double")
-                }
-
-            FoodEntryListView()
-                .tabItem {
-                    Label("Food", systemImage: "fork.knife")
-                }
-
-            WorkoutListView()
-                .tabItem {
-                    Label("Lift", systemImage: "dumbbell")
-                }
-
-            RunListView()
-                .tabItem {
-                    Label("Run", systemImage: "figure.run")
                 }
         }
     }

@@ -8,6 +8,7 @@ struct Workout: Codable, Hashable, Identifiable {
     let notes: String?
     let source: String
     let liftSets: [LiftSet]
+    let runSession: RunSession?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -17,6 +18,7 @@ struct Workout: Codable, Hashable, Identifiable {
         case notes
         case source
         case liftSets = "lift_sets"
+        case runSession = "run_session"
     }
 }
 
