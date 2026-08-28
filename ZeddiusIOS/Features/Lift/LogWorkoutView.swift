@@ -74,7 +74,7 @@ struct LogWorkoutView: View {
                     }
                 }
             }
-            .dismissKeyboardToolbar()
+            .dismissKeyboardOnScroll()
             .sheet(isPresented: $isPresentingAddSet) {
                 AddLiftSetView(exercises: model.exercises) { newSet in
                     draftSets.append(newSet)
