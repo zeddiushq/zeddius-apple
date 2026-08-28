@@ -84,12 +84,26 @@ private struct SleepRow: View {
             }
             Spacer()
             if let qualityScore = entry.qualityScore {
-                Label("\(qualityScore)", systemImage: "star.fill")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                StarRatingView(score: qualityScore)
             }
         }
         .padding(.vertical, 4)
+    }
+}
+
+/// Filled stars for the score (1-5), outline stars for the rest — the number
+/// alone didn't read as a rating, and a fixed "star.fill" icon didn't either.
+private struct StarRatingView: View {
+    let score: Int
+
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(1...5, id: \.self) { position in
+                Image(systemName: position <= score ? "star.fill" : "star")
+                    .font(.caption2)
+                    .foregroundStyle(position <= score ? .yellow : .secondary)
+            }
+        }
     }
 }
 
