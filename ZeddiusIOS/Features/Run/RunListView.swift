@@ -1,9 +1,9 @@
 import SwiftUI
 
-struct WorkoutListView: View {
+struct RunListView: View {
     @Environment(APIClient.self) private var api
-    @State private var model: WorkoutModel?
-    @State private var isPresentingLogWorkout = false
+    @State private var model: RunModel?
+    @State private var isPresentingLogRun = false
 
     var body: some View {
         NavigationStack {
@@ -14,24 +14,24 @@ struct WorkoutListView: View {
                     ProgressView()
                 }
             }
-            .navigationTitle("Lift")
+            .navigationTitle("Run")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
-                        isPresentingLogWorkout = true
+                        isPresentingLogRun = true
                     } label: {
                         Image(systemName: "plus")
                     }
                 }
             }
-            .sheet(isPresented: $isPresentingLogWorkout) {
+            .sheet(isPresented: $isPresentingLogRun) {
                 if let model {
-                    LogWorkoutView(model: model)
+                    LogRunView(model: model)
                 }
             }
             .task {
                 if model == nil {
-                    model = WorkoutModel(api: api)
+                    model = RunModel(api: api)
                 }
                 await model?.load()
             }
@@ -42,30 +42,30 @@ struct WorkoutListView: View {
     }
 
     @ViewBuilder
-    private func content(for model: WorkoutModel) -> some View {
-        let liftWorkouts = model.liftWorkouts
-        if model.isLoading && liftWorkouts.isEmpty {
+    private func content(for model: RunModel) -> some View {
+        let runWorkouts = model.runWorkouts
+        if model.isLoading && runWorkouts.isEmpty {
             ProgressView()
-        } else if liftWorkouts.isEmpty {
+        } else if runWorkouts.isEmpty {
             ContentUnavailableView {
-                Label("No workouts yet", systemImage: "dumbbell")
+                Label("No runs yet", systemImage: "figure.run")
             } description: {
-                Text("Tap + to log a lifting session.")
+                Text("Tap + to log a run.")
             }
         } else {
             List {
-                ForEach(liftWorkouts) { workout in
-                    WorkoutRow(workout: workout)
+                ForEach(runWorkouts) { workout in
+                    RunWorkoutRow(workout: workout)
                 }
                 .onDelete { offsets in
-                    Task { await model.delete(at: offsets, in: liftWorkouts) }
+                    Task { await model.delete(at: offsets, in: runWorkouts) }
                 }
             }
         }
     }
 }
 
-private struct WorkoutRow: View {
+private struct RunWorkoutRow: View {
     let workout: Workout
 
     var body: some View {
@@ -87,6 +87,6 @@ private struct WorkoutRow: View {
 }
 
 #Preview {
-    WorkoutListView()
+    RunListView()
         .environment(APIClient())
 }

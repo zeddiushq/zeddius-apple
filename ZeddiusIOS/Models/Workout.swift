@@ -32,8 +32,9 @@ struct CreateWorkoutRequest: Encodable {
     }
 }
 
-/// The subset of `workouts.type` this app's Lift screen offers — `run_easy`/
-/// `run_long` belong to the future Run feature (Chunk 5), not lift logging.
+/// `custom` is a shared catch-all, not lift- or run-specific — a workout
+/// logged as `custom` from either screen will show up in both lists. Every
+/// other value is unambiguous via its `lift_`/`run_` prefix.
 enum WorkoutType {
     static let liftOptions: [(value: String, label: String)] = [
         ("lift_upper_a", "Upper A"),
@@ -43,7 +44,21 @@ enum WorkoutType {
         ("custom", "Custom"),
     ]
 
+    static let runOptions: [(value: String, label: String)] = [
+        ("run_easy", "Easy Run"),
+        ("run_long", "Long Run"),
+        ("custom", "Custom"),
+    ]
+
     static func label(for value: String) -> String {
-        liftOptions.first(where: { $0.value == value })?.label ?? value.capitalized
+        (liftOptions + runOptions).first(where: { $0.value == value })?.label ?? value.capitalized
+    }
+
+    static func isLiftType(_ value: String) -> Bool {
+        value.hasPrefix("lift_") || value == "custom"
+    }
+
+    static func isRunType(_ value: String) -> Bool {
+        value.hasPrefix("run_") || value == "custom"
     }
 }

@@ -88,6 +88,13 @@ final class APIClient {
         try await requestNoContent("DELETE", path: "/workouts/\(id.uuidString)", body: nil, retrying: true)
     }
 
+    func createRunSession(workoutId: UUID, _ body: CreateRunSessionRequest) async throws -> RunSession {
+        let encoded = try APICoding.encoder.encode(body)
+        return try await requestDecoded(
+            "POST", path: "/workouts/\(workoutId.uuidString)/run-session", body: encoded, retrying: true
+        )
+    }
+
     // MARK: - Core request handling
 
     private func request<T: Decodable>(_ method: String, path: String) async throws -> T {
