@@ -89,6 +89,15 @@ final class APIClient {
         )
     }
 
+    func updateLiftSet(id: UUID, _ body: UpdateLiftSetRequest) async throws -> LiftSet {
+        let encoded = try APICoding.encoder.encode(body)
+        return try await requestDecoded("PATCH", path: "/lift-sets/\(id.uuidString)", body: encoded, retrying: true)
+    }
+
+    func getWorkout(id: UUID) async throws -> Workout {
+        try await request("GET", path: "/workouts/\(id.uuidString)")
+    }
+
     func deleteWorkout(id: UUID) async throws {
         try await requestNoContent("DELETE", path: "/workouts/\(id.uuidString)", body: nil, retrying: true)
     }

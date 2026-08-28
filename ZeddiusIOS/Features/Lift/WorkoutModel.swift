@@ -36,22 +36,21 @@ final class WorkoutModel {
         }
     }
 
-    func logWorkout(type: String, startedAt: Date, notes: String?, sets: [CreateLiftSetRequest]) async -> Bool {
+    /// Creates just the workout shell — sets get added afterward, one at a
+    /// time, from WorkoutDetailView. Most sessions aren't logged in one
+    /// sitting, so there's no bulk "save everything at the end" step.
+    func createWorkout(type: String, startedAt: Date, notes: String?) async -> Workout? {
         errorMessage = nil
         do {
             let workout = try await api.createWorkout(
                 CreateWorkoutRequest(type: type, startedAt: startedAt, notes: notes)
             )
-            if !sets.isEmpty {
-                _ = try await api.createLiftSets(workoutId: workout.id, BulkCreateLiftSetsRequest(sets: sets))
-            }
-            // Simplest way to get the fresh workout (with lift_sets nested)
-            // into the list in the right sorted position.
-            await load()
-            return true
+            workouts.insert(workout, at: 0)
+            workouts.sort { $0.startedAt > $1.startedAt }
+            return workout
         } catch {
             errorMessage = error.localizedDescription
-            return false
+            return nil
         }
     }
 
