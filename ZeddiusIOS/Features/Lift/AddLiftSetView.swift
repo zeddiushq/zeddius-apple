@@ -57,6 +57,7 @@ struct AddLiftSetView: View {
                     Button("Add") { add() }
                 }
             }
+            .dismissKeyboardToolbar()
         }
     }
 

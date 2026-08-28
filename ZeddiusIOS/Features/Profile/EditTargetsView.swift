@@ -82,6 +82,7 @@ struct EditTargetsView: View {
                     }
                 }
             }
+            .dismissKeyboardToolbar()
         }
     }
 
