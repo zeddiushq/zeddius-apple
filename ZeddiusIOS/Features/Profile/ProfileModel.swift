@@ -25,4 +25,24 @@ final class ProfileModel {
             errorMessage = error.localizedDescription
         }
     }
+
+    func updateTargets(
+        targetCalories: Int?,
+        targetProteinG: Int?,
+        targetWeightKg: Decimal?
+    ) async -> Bool {
+        errorMessage = nil
+        let body = UpdateUserRequest(
+            targetCalories: targetCalories,
+            targetProteinG: targetProteinG,
+            targetWeightKg: targetWeightKg
+        )
+        do {
+            user = try await api.updateMe(body)
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
 }
