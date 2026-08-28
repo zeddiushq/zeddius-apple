@@ -17,6 +17,13 @@ struct FoodEntryListView: View {
             }
             .navigationTitle("Food")
             .toolbar {
+                if !Calendar.current.isDateInToday(selectedDate) {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Today") {
+                            selectedDate = Calendar.current.startOfDay(for: Date())
+                        }
+                    }
+                }
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         isPresentingAddEntry = true
@@ -124,10 +131,15 @@ private struct DaySelectorRow: View {
     private var calendar: Calendar { .current }
     private var isToday: Bool { calendar.isDateInToday(selectedDate) }
 
+    /// Always includes the weekday, even for Today/Yesterday, so paging
+    /// back through past days doesn't require doing the day-of-week math
+    /// in your head.
     private var label: String {
-        if isToday { return "Today" }
-        if calendar.isDateInYesterday(selectedDate) { return "Yesterday" }
-        return selectedDate.formatted(date: .abbreviated, time: .omitted)
+        let weekday = selectedDate.formatted(.dateTime.weekday(.abbreviated))
+        if isToday { return "Today · \(weekday)" }
+        if calendar.isDateInYesterday(selectedDate) { return "Yesterday · \(weekday)" }
+        let date = selectedDate.formatted(date: .abbreviated, time: .omitted)
+        return "\(weekday), \(date)"
     }
 
     var body: some View {
@@ -175,14 +187,31 @@ private struct TotalsRow: View {
         entries.reduce(0) { $0 + ($1.proteinG ?? 0) }
     }
 
+    /// Unclamped ratio (can exceed 1) — the bar itself clamps its fill
+    /// width, but color needs to know whether target was actually exceeded.
     private var kcalProgress: Double? {
         guard let targetCalories, targetCalories > 0 else { return nil }
-        return min(Double(truncating: totalKcal as NSNumber) / Double(targetCalories), 1)
+        return Double(truncating: totalKcal as NSNumber) / Double(targetCalories)
     }
 
     private var proteinProgress: Double? {
         guard let targetProteinG, targetProteinG > 0 else { return nil }
-        return min(Double(truncating: totalProteinG as NSNumber) / Double(targetProteinG), 1)
+        return Double(truncating: totalProteinG as NSNumber) / Double(targetProteinG)
+    }
+
+    /// The goal is to land at or under the calorie target — under/at is
+    /// fine, over is the thing to avoid.
+    private var kcalColor: Color {
+        guard let targetCalories, targetCalories > 0 else { return .accentColor }
+        if totalKcal > Decimal(targetCalories) { return .red }
+        if totalKcal == Decimal(targetCalories) { return .green }
+        return .accentColor
+    }
+
+    /// Protein is the opposite: the goal is to land at or over the target.
+    private var proteinColor: Color {
+        guard let targetProteinG, targetProteinG > 0 else { return .orange }
+        return totalProteinG >= Decimal(targetProteinG) ? .green : .orange
     }
 
     var body: some View {
@@ -201,12 +230,10 @@ private struct TotalsRow: View {
                     .foregroundStyle(.secondary)
             }
             if let kcalProgress {
-                ProgressView(value: kcalProgress)
-                    .tint(kcalProgress >= 1 ? .green : .accentColor)
+                ThickProgressBar(progress: kcalProgress, color: kcalColor)
             }
             if let proteinProgress {
-                ProgressView(value: proteinProgress)
-                    .tint(proteinProgress >= 1 ? .green : .orange)
+                ThickProgressBar(progress: proteinProgress, color: proteinColor)
             }
         }
         .padding(.vertical, 2)
@@ -222,6 +249,28 @@ private struct TotalsRow: View {
         let total = totalProteinG.formatted(.number.precision(.fractionLength(0)))
         guard let targetProteinG else { return "\(total)g protein" }
         return "\(total) / \(targetProteinG)g protein"
+    }
+}
+
+/// A `ProgressView(.linear)` renders too thin to read at a glance and
+/// offers no way to thicken it — this draws the fill directly so height
+/// and color are both under our control. `progress` is unclamped (can
+/// exceed 1); only the visual fill width clamps at the full bar.
+private struct ThickProgressBar: View {
+    let progress: Double
+    let color: Color
+
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Color(.systemGray5))
+                Capsule()
+                    .fill(color)
+                    .frame(width: geometry.size.width * min(max(progress, 0), 1))
+            }
+        }
+        .frame(height: 10)
     }
 }
 
