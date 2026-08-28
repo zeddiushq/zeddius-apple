@@ -50,4 +50,16 @@ enum APICoding {
         encoder.dateEncodingStrategy = .iso8601
         return encoder
     }()
+
+    // The shared encoder above always produces a full datetime string, which
+    // a Rust `NaiveDate` field (e.g. `sleep_logs.date`) can't deserialize —
+    // it needs a plain "YYYY-MM-DD". Use this for any request field typed
+    // that way instead of routing it through `encoder`.
+    static func dateOnlyString(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .iso8601)
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        return formatter.string(from: date)
+    }
 }
