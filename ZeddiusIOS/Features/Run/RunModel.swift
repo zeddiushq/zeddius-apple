@@ -3,9 +3,8 @@ import Observation
 
 @Observable
 @MainActor
-final class WorkoutModel {
+final class RunModel {
     private(set) var workouts: [Workout] = []
-    private(set) var exercises: [Exercise] = []
     private(set) var isLoading = false
     var errorMessage: String?
 
@@ -16,9 +15,9 @@ final class WorkoutModel {
     }
 
     /// `workouts` holds every type (lift and run share one `/workouts`
-    /// list) — this screen only shows the lift-relevant ones.
-    var liftWorkouts: [Workout] {
-        workouts.filter { WorkoutType.isLiftType($0.type) }
+    /// list) — this screen only shows the run-relevant ones.
+    var runWorkouts: [Workout] {
+        workouts.filter { WorkoutType.isRunType($0.type) }
     }
 
     func load() async {
@@ -28,25 +27,36 @@ final class WorkoutModel {
 
         do {
             workouts = try await api.getWorkouts()
-            if exercises.isEmpty {
-                exercises = try await api.getExercises()
-            }
         } catch {
             errorMessage = error.localizedDescription
         }
     }
 
-    func logWorkout(type: String, startedAt: Date, notes: String?, sets: [CreateLiftSetRequest]) async -> Bool {
+    func logRun(
+        type: String,
+        startedAt: Date,
+        notes: String?,
+        distanceMeters: Decimal,
+        durationSeconds: Int,
+        avgHeartRate: Int?,
+        maxHeartRate: Int?,
+        elevationGainMeters: Decimal?
+    ) async -> Bool {
         errorMessage = nil
         do {
             let workout = try await api.createWorkout(
                 CreateWorkoutRequest(type: type, startedAt: startedAt, notes: notes)
             )
-            if !sets.isEmpty {
-                _ = try await api.createLiftSets(workoutId: workout.id, BulkCreateLiftSetsRequest(sets: sets))
-            }
-            // Simplest way to get the fresh workout (with lift_sets nested)
-            // into the list in the right sorted position.
+            _ = try await api.createRunSession(
+                workoutId: workout.id,
+                CreateRunSessionRequest(
+                    distanceMeters: distanceMeters,
+                    durationSeconds: durationSeconds,
+                    avgHeartRate: avgHeartRate,
+                    maxHeartRate: maxHeartRate,
+                    elevationGainMeters: elevationGainMeters
+                )
+            )
             await load()
             return true
         } catch {
@@ -55,7 +65,7 @@ final class WorkoutModel {
         }
     }
 
-    /// `displayed` is `liftWorkouts` (a filtered view) — `offsets` indexes
+    /// `displayed` is `runWorkouts` (a filtered view) — `offsets` indexes
     /// into it, not into `workouts`, so deletion is resolved by id.
     func delete(at offsets: IndexSet, in displayed: [Workout]) async {
         let toDelete = offsets.map { displayed[$0] }

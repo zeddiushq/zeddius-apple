@@ -27,6 +27,11 @@ struct MainTabView: View {
                 .tabItem {
                     Label("Lift", systemImage: "dumbbell")
                 }
+
+            RunListView()
+                .tabItem {
+                    Label("Run", systemImage: "figure.run")
+                }
         }
     }
 }
