@@ -70,6 +70,18 @@ struct ProfileView: View {
                     if let targetSleepHours = user.targetSleepHours {
                         LabeledContent("Sleep", value: "\(targetSleepHours.formatted(.number.precision(.fractionLength(1)))) hrs")
                     }
+                    if let wakeTime = user.targetWakeTime {
+                        LabeledContent("Wake by", value: wakeTime.formatted(date: .omitted, time: .shortened))
+                    }
+                    if let bedTime = user.targetBedTime {
+                        LabeledContent("Bed by", value: bedTime.formatted(date: .omitted, time: .shortened))
+                    }
+                    if let runs = user.targetWeeklyRuns {
+                        LabeledContent("Runs", value: "\(runs) per week")
+                    }
+                    if let lifts = user.targetWeeklyLifts {
+                        LabeledContent("Lifts", value: "\(lifts) per week")
+                    }
                     Button("Edit Targets") {
                         isPresentingEditTargets = true
                     }

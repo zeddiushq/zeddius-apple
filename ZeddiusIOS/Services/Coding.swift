@@ -41,7 +41,7 @@ enum APICoding {
         let formatter = DateFormatter()
         formatter.calendar = Calendar(identifier: .iso8601)
         formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.timeZone = .current
         return formatter.date(from: raw)
     }
 
@@ -55,11 +55,25 @@ enum APICoding {
     // a Rust `NaiveDate` field (e.g. `sleep_logs.date`) can't deserialize —
     // it needs a plain "YYYY-MM-DD". Use this for any request field typed
     // that way instead of routing it through `encoder`.
+    //
+    // Uses the device's local timezone, not UTC: a date-only field means
+    // "which calendar day, as the user experiences it." Anchoring to UTC
+    // instead silently shifted evening actions (Close Day, typically done
+    // at night) onto the wrong day for anyone west of UTC — "today" at
+    // 8pm Pacific is already "tomorrow" in UTC.
     static func dateOnlyString(from date: Date) -> String {
         let formatter = DateFormatter()
         formatter.calendar = Calendar(identifier: .iso8601)
         formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.timeZone = .current
         return formatter.string(from: date)
+    }
+
+    /// For `from`/`to` query params on endpoints whose field is a full
+    /// `DateTime<Utc>` (food/sleep/workouts), not a date-only `NaiveDate` —
+    /// a plain formatted string for the URL, not the JSON-body `.iso8601`
+    /// encoder strategy above.
+    static func iso8601String(from date: Date) -> String {
+        ISO8601DateFormatter().string(from: date)
     }
 }
