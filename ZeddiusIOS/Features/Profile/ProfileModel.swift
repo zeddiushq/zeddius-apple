@@ -29,13 +29,21 @@ final class ProfileModel {
     func updateTargets(
         targetCalories: Int?,
         targetProteinG: Int?,
-        targetWeightKg: Decimal?
+        targetWeightKg: Decimal?,
+        targetWakeTime: Date?,
+        targetBedTime: Date?,
+        targetWeeklyRuns: Int?,
+        targetWeeklyLifts: Int?
     ) async -> Bool {
         errorMessage = nil
         let body = UpdateUserRequest(
             targetCalories: targetCalories,
             targetProteinG: targetProteinG,
-            targetWeightKg: targetWeightKg
+            targetWeightKg: targetWeightKg,
+            targetWakeTime: targetWakeTime,
+            targetBedTime: targetBedTime,
+            targetWeeklyRuns: targetWeeklyRuns,
+            targetWeeklyLifts: targetWeeklyLifts
         )
         do {
             user = try await api.updateMe(body)

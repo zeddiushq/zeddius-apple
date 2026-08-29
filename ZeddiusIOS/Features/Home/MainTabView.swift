@@ -18,6 +18,11 @@ struct MainTabView: View {
                     Label("Train", systemImage: "figure.run")
                 }
 
+            HistoryView()
+                .tabItem {
+                    Label("History", systemImage: "square.grid.3x3")
+                }
+
             ProfileView()
                 .tabItem {
                     Label("Profile", systemImage: "person.crop.circle")

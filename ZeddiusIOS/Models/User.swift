@@ -14,6 +14,10 @@ struct User: Codable, Hashable, Identifiable {
     let targetProteinG: Int?
     let targetSleepHours: Double?
     @OptionalDecimalString var targetWeightKg: Decimal?
+    @OptionalTimeString var targetWakeTime: Date?
+    @OptionalTimeString var targetBedTime: Date?
+    let targetWeeklyRuns: Int?
+    let targetWeeklyLifts: Int?
     let createdAt: Date
     let updatedAt: Date
 
@@ -29,6 +33,10 @@ struct User: Codable, Hashable, Identifiable {
         case targetProteinG = "target_protein_g"
         case targetSleepHours = "target_sleep_hours"
         case targetWeightKg = "target_weight_kg"
+        case targetWakeTime = "target_wake_time"
+        case targetBedTime = "target_bed_time"
+        case targetWeeklyRuns = "target_weekly_runs"
+        case targetWeeklyLifts = "target_weekly_lifts"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -41,11 +49,19 @@ struct UpdateUserRequest: Encodable {
     var targetCalories: Int?
     var targetProteinG: Int?
     @OptionalDecimalString var targetWeightKg: Decimal?
+    @OptionalTimeString var targetWakeTime: Date?
+    @OptionalTimeString var targetBedTime: Date?
+    var targetWeeklyRuns: Int?
+    var targetWeeklyLifts: Int?
 
     enum CodingKeys: String, CodingKey {
         case targetCalories = "target_calories"
         case targetProteinG = "target_protein_g"
         case targetWeightKg = "target_weight_kg"
+        case targetWakeTime = "target_wake_time"
+        case targetBedTime = "target_bed_time"
+        case targetWeeklyRuns = "target_weekly_runs"
+        case targetWeeklyLifts = "target_weekly_lifts"
     }
 }
 
